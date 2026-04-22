@@ -1,0 +1,14 @@
+### Generated Files ###
+*.swp
+/out/
+.refresh
+_minted-document/
+missfont.log
+*.log
+*.fls
+*.fdb_latexmk
+*.aux
+*.out
+*.pdf
+*.synctex.gz
+.~lock.document.pdf#

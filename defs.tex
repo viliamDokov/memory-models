@@ -1,0 +1,169 @@
+
+\definecolor{codegreen}{rgb}{0.02 0.5 0.09}
+\definecolor{codegray}{rgb}{0.46,0.48,0.54}
+\definecolor{codeblue}{rgb}{0,0.2,0.7}
+\definecolor{codebg}{rgb}{0.96,0.965,0.97}
+\definecolor{codefg}{rgb}{0.03,0.03,0.03}
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{codebg},
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{codeblue},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codegreen},
+	basicstyle=\ttfamily\footnotesize\color{codefg},
+	breakatwhitespace=false,
+	showstringspaces=false,
+	numbers=left,
+}
+\lstset{style=mystyle}
+
+\lstdefinelanguage{cat}
+{morekeywords={let,with,from,empty,irreflexive,acyclic,show},
+sensitive=false,
+morecomment=[s]{(*}{*)},
+morestring=[b]",
+}
+
+
+
+
+\title{Memory models}
+% \author{Wiliam Dokov}
+% \date{April 2026}
+
+\colorlet{colorPO}{gray!60!black}
+\colorlet{colorRF}{green!60!black}
+\colorlet{colorMO}{orange}
+\colorlet{colorFR}{purple}
+\colorlet{colorECO}{red!80!black}
+\colorlet{colorSW}{green!40!black}
+\colorlet{colorHB}{blue}
+\colorlet{colorPPO}{magenta}
+\colorlet{colorPB}{olive}
+\colorlet{colorSBRF}{olive}
+\colorlet{colorRMW}{olive!70!black}
+\colorlet{colorRSEQ}{blue}
+\colorlet{colorSC}{violet}
+\colorlet{colorPSC}{violet}
+\colorlet{colorREL}{olive}
+\colorlet{colorCONFLICT}{olive}
+\colorlet{colorRACE}{olive}
+\colorlet{colorWB}{orange!70!black}
+\colorlet{colorSCB}{violet}
+\colorlet{colorDEPS}{violet}
+\colorlet{colorBF}{green!40!black}
+\colorlet{colorRS}{blue}
+\colorlet{colorRA}{pink}
+\colorlet{colorSVO}{pink}
+\colorlet{colorSPUSH}{cyan}
+\colorlet{colorVOLINT}{cyan}
+\colorlet{colorPUSHTO}{gray}
+\colorlet{colorPUSH}{black}
+\colorlet{colorVVO}{cyan}
+\colorlet{colorVO}{cyan}
+\colorlet{colorCOWW}{black}
+\colorlet{colorCOWR}{black}
+\colorlet{colorCORW}{black}
+\colorlet{colorCORR}{black}
+\colorlet{colorCORMWTOTAL}{black}
+
+
+\newcommand{\na}{\mathtt{na}}
+\newcommand{\pln}{\mathtt{pln}}
+\newcommand{\rlx}{\mathtt{rlx}}
+\newcommand{\rel}{{\mathtt{rel}}}
+\newcommand{\acq}{{\mathtt{acq}}}
+\newcommand{\acqrel}{{\mathtt{acqrel}}}
+\newcommand{\sco}{{\mathtt{sc}}}
+\newcommand{\sto}{{\mathtt{st}}}
+\newcommand{\full}{{\mathtt{sy}}}
+\newcommand{\ld}{{\mathtt{ld}}}
+\newcommand{\isb}{{\mathtt{isb}}}
+\newcommand{\loc}{\mathtt{loc}}
+
+% common relations
+\newcommand{\po}{{\color{colorPO}\mathit{po}}}
+\newcommand{\rf}{{\color{colorRF}\mathit{rf}}}
+\newcommand{\mo}{{\color{colorMO}\mathit{mo}}}
+\newcommand{\hb}{{\color{colorHB}\mathit{hb}}}
+\newcommand{\rb}{{\color{colorFR}\mathit{rb}}}
+
+%c11 relations
+\newcommand{\eco}{{\color{colorECO}\mathit{eco}}}
+\newcommand{\rs}{{\color{colorRS}\mathit{rs}}}
+\newcommand{\sw}{{\color{colorSW}\mathit{sw}}}
+\newcommand{\rmw}{{\color{colorRMW}\mathit{rmw}}}
+\newcommand{\poneqloc}{{\po|_{\neq\loc}}}
+\newcommand{\scb}{{\color{colorSC}\mathit{scb}}}
+\newcommand{\pscbase}{{\color{colorSC}\mathit{psc}}_\mathtt{{base}}}
+\newcommand{\pscf}{{{\color{colorSC}\mathit{psc}}_{\lF}}}
+\newcommand{\psc}{{\color{colorSC}\mathit{psc}}}
+
+%JAM relations
+\newcommand{\ra}{{\color{colorRA}\mathit{ra}}}
+\newcommand{\svo}{{\color{colorSVO}\mathit{svo}}}
+\newcommand{\spush}{{\color{colorSPUSH}\mathit{spush}}}
+\newcommand{\volint}{{\color{colorVOLINT}\mathit{volint}}}
+\newcommand{\push}{{\color{colorPUSH}\mathit{push}}}
+\newcommand{\pushto}{{\color{colorPUSHTO}\mathit{pushto}}}
+\newcommand{\vvo}{{\color{colorVVO}\mathit{vvo}}}
+\newcommand{\vo}{{\color{colorVO}\mathit{vo}}}
+\newcommand{\poloc}{{\po_{\loc}}}
+\newcommand{\coww}{{\color{colorCOWW}\mathit{coww}}}
+\newcommand{\cowr}{{\color{colorCOWR}\mathit{cowr}}}
+\newcommand{\corw}{{\color{colorCORW}\mathit{corw}}}
+\newcommand{\corr}{{\color{colorCORR}\mathit{corr}}}
+\newcommand{\cormwtotal}{{\color{colorCORMWTOTAL}\mathit{cormwtotal}}}
+\newcommand{\cojom}{{\color{colorMO}\mathtt{co-jom}}}
+\newcommand{\wwco}[1]{\text{WWco}(#1)}
+
+
+\newcommand{\set}[1]{\{{#1}\}}
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\pfn}{\rightharpoonup}
+\newcommand{\fpfn}{\mathrel{\stackrel{\mathsf{fin}}{\rightharpoonup}}}
+\newcommand{\st}{\; | \;}
+\newcommand{\N}{{\mathbb{N}}}
+\newcommand{\dom}[1]{\textit{dom}{({#1})}}
+\newcommand{\domText}{\textit{dom}}
+\newcommand{\codom}[1]{\textit{codom}{({#1})}}
+\newcommand{\before}[2]{{#1}_{#2}^\uparrow}
+\newcommand{\after}[2]{{#1}_{#2}^\downarrow}
+\newcommand{\tup}[1]{{\langle{#1}\rangle}}
+\newcommand{\nin}{\not\in}
+\newcommand{\suq}{\subseteq}
+\newcommand{\sqsuq}{\sqsubseteq}
+\newcommand{\sqsu}{\sqsubset}
+\newcommand{\sqslq}{\sqsupseteq}
+\newcommand{\size}[1]{|{#1}|}
+\newcommand{\block}[1]{\langle {#1}\rangle}
+\newcommand{\true}{\top}
+
+
+\renewcommand*{\mathellipsis}{\mathinner{{\ldotp}{\ldotp}{\ldotp}}}
+\newcommand{\rst}[1]{|_{#1}}
+\newcommand{\imm}[1]{{#1}{\rst{\text{imm}}}}
+\renewcommand{\succ}[2]{\text{succ}_{#1}(#2)}
+\newcommand{\aite}[3]{(#1\;?\;#2:#3)}
+\newcommand{\defiff}{\mathrel{\stackrel{\mathsf{\triangle}}{\Leftrightarrow}}}
+\newcommand{\defeq}{\triangleq}
+\newcommand{\powerset}[1]{\mathcal{P}({#1})}
+\newcommand{\finpowerset}[1]{\mathcal{P}_{<\omega}({#1})}
+
+\newcommand{\lE}{{\mathtt{E}}}
+\newcommand{\lC}{{\mathtt{C}}}
+\newcommand{\lM}{{\mathtt{M}}}
+\newcommand{\lS}{{\mathtt{Skip}}}
+\newcommand{\lR}{{\mathtt{R}}}
+\newcommand{\lW}{{\mathtt{W}}}
+\newcommand{\lA}{{\mathtt{A}}}
+\newcommand{\lQ}{{\mathtt{Q}}}
+\newcommand{\lL}{{\mathtt{L}}}
+\newcommand{\lU}{{\mathtt{RMW}}}
+\newcommand{\lF}{{\mathtt{F}}}
+\newcommand{\lRES}{{\mathtt{Res}}}
+\newcommand{\lAT}{{\mathtt{At}}}
+\newcommand{\lATR}{{\mathtt{AtR}}}
+\newcommand{\linit}{{\mathtt{init}}}
+\newcommand{\lSigma}{{\mathbf{\Sigma}}}
+\newcommand{\lTheta}{{\mathbf{\Theta}}}

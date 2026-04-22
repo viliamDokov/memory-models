@@ -1,0 +1,149 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\input{defs}
+
+\begin{document}
+
+\section{RC11}
+
+\begin{align*}
+    \rb &\defeq \rf^{-1} ; \mo  \\
+    \eco &\defeq (\rf \cup \mo \cup \rb)^+ \\
+    \rs &\defeq [\lW]; \po|_{\loc}^?; [\lW^{\sqslq \rlx}]; (\rf; \rmw)^*  \\
+    \sw &\defeq [\lE^{\sqslq \rel}]; ([\lF]; \po)^?; \rs; \rf; [\lR^{\sqslq \rlx}]; (\po; [\lF])^?; [\lE^{\sqslq \acq}] \\
+    \hb &\defeq (\po \cup \sw)^+ \\
+    \poneqloc &\defeq \po \setminus \po|_{\loc} \\
+    \scb &\defeq \po \cup \poneqloc ; \hb ; \poneqloc \cup \hb|_{loc}
+    \cup mo \cup rb \\
+    \pscbase &\defeq ([\lE^\sco] \cup [\lF^\sco] ; \hb^?) ; \scb ; ([\lE^\sco] \cup \hb^? [\lF^\sco]) \\
+    \pscf &\defeq [\lF^\sco] ; (\hb \cup \hb;\eco;\hb) ; [\lF^\sco] \\
+    \psc &\defeq \pscbase \cup \pscf
+\end{align*}
+
+\begin{enumerate}
+    \item $\hb ; \eco^?$ is irreflexive. 
+    \item $\rmw \cap (\rb ; \mo) = \emptyset$. 
+    \item $\psc$ is acyclic. 
+    \item $\po \cup \rf$ is acyclic.
+\end{enumerate}
+
+\section{JAM21}
+
+% let into = svo | spush | ra | volint
+
+\begin{align*}
+    \ra &\defeq \po ; [\lE^{\sqslq \rel}] \cup [\lE^{\sqslq \acq}] ; \po \\ 
+    \svo &\defeq \po ; [\lF^{\rel}] ; \po ; [\lW] \cup [\lR] ; \po ; [\lF^\acq] ; \po \\
+    \spush &\defeq \po ; [\lF^{\sco}] ; \po \\
+    \volint &\defeq [\lE^\sco] ; \po ; [\lE^\sco] \\
+    \push &\defeq \spush \cup \volint \\
+    \pushto &\defeq \texttt{total order on $\dom{\push}$, s.t. $\po \cup \rf \subseteq \pushto$} \\
+    \vvo &\defeq \rf \cup \svo \cup \ra \cup \spush \cup \volint \cup \pushto ; (\spush \cup \volint) \\
+    \vo &\defeq \vvo^+ \cup \poloc \\
+    \wwco{\textit{rel}} &\defeq \set{\tup{i_1, i_2} \st \tup{i_1, i_2} \in \textit{rel} \land \tup{i_1, i_2} \in \lW \land \loc(i_1) = \loc(i_2) \land i_1 \neq i_2} \\
+    \coww &\defeq \wwco{\vo} \\
+    \cowr &\defeq \wwco{\vo ; \rf^{-1}} \\
+    \corw &\defeq \wwco{\vo ; \po} \\
+    \corr &\defeq [E^{\sqslq \rlx}] ;  \wwco{\rf ; \po ; \rf^{-1}} ; [E^{\sqslq \rlx}] \\
+    \cormwtotal &\defeq \texttt{arbitrary order on $\lU$ events that is total per location} \\ 
+    \cojom &\defeq \coww \cup \cowr \cup \corw \cup \corr \cup \cormwtotal \cup \wwco{(\rf;[\lU])^{-1} ; \cojom}
+\end{align*}
+
+\begin{enumerate}
+    \item $\cojom$ is acyclic. 
+    \item $\po \cup \rf$ is acyclic.
+\end{enumerate}
+
+This model is based on the .cat definition from below. Notably any mentions of final and inital writes are misisng. Also, instead of the Java names for access modes e.g. opaque, volatile, we use the C11 names e.g. relaxed, sc.  
+
+\section{JAM21 cat definition}
+
+Taken from \href{https://github.com/ShuyangLiu/ECOOP22-Supplementary-Material/blob/master/litmus/java/jam21.cat}{here}
+
+\begin{lstlisting}[language=cat,label=lst:jls-cat]
+"Java Access Modes"
+
+let opq = O | RA | V
+let rel = (W) & (REL | V) (* Release write or Release Fence *)
+let acq = (R) & (ACQ | V) (* Acquire read or Acquire Fence  *)
+let vol = V
+let fence = F
+
+(* volatile accesses extend push order *)
+let svo = po;[fence & REL];po;[W] | [R];po;[fence & ACQ];po
+let spush = po;[fence & V];po
+
+(* release acquire ordering *)
+let ra = po;[rel] | [acq];po
+
+(* intra thread volatile ordering *)
+let volint =  [V];po;[V]
+
+(* intrathread ordering contraints *)
+let into = svo | spush | ra | volint
+
+(* define trace order, ensure it respects rf and intra thread specified orders *)
+(* NOTE ((W * FW) & loc & ~id) = cofw *)
+let push = spush | volint
+with pushto from linearisations(domain(push), ((W * FW) & loc & ~id) | rf | po)
+
+(* cross thread push ordering extended with volatile memory accesses *)
+(* extend ra visibility *)
+(* let sw = [M & rel] ; rfe ; [M & acq] *)
+let vvo = into | rf | pushto ; push
+let vo = vvo+ | po-loc
+
+include "filters.cat"
+
+let WWco(rel) = WW(rel) & loc & ~id
+
+(* initial writes are before everything *)
+let coinit = loc & IW*(W\IW)
+
+(* final writes are co-after everything *)
+let cofw = WWco((W * FW))
+
+(* jom coherence *)
+let coww = WWco(vo)
+let cowr = WWco(vo;invrf)
+let corw = WWco(vo;po)
+let corr = [opq] ; WWco(rf;po;invrf) ; [opq]
+
+(* borrow general definition from RC11 that will work for atomic rws and split instruction rws *)
+(*let rmw-jom = [RMW] | rmw*)
+
+
+(* use to define when they are executed *)
+
+include "cross.cat"
+let co0 = loc & (IW*(W\IW)|(W\FW)*FW)
+with cormwtotal from generate_orders(RMW, co0)
+
+(* i1 -rf> ir -rmw> i2 /\ i1 -co> i3 => i2 -co> i3 atm coherence *)
+(* let cormwexcl = WWco((rf;[RMW])^-1;co-jom) *)
+
+let rec co-jam = coww
+               | cowr
+               | corw
+               | corr
+               | cormwtotal
+               | WWco((rf;[RMW])^-1;co-jam)
+               | coinit
+               | cofw
+
+acyclic (po | rf) ; [opq] as no-thin-air
+acyclic co-jam as coherence
+
+show corr, corw, cowr, coww, coinit, cofw, cormwtotal
+\end{lstlisting}
+
+\end{document}
+
+\end{document}
